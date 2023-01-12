@@ -102,6 +102,7 @@ namespace Microsoft.AspNetCore.Http.Generated
                             return ValueTask.FromResult<object?>(Results.Empty);
                         }
                         return ValueTask.FromResult<object?>(handler());
+
                     },
                     options.EndpointBuilder,
                     handler.Method);
@@ -109,14 +110,17 @@ namespace Microsoft.AspNetCore.Http.Generated
 
                 Task RequestHandler(HttpContext httpContext)
                 {
-                        var result = handler();
-                        return httpContext.Response.WriteAsync(result);
+                    httpContext.Response.ContentType ??= "text/plain";
+                    var result = handler();
+                    return GeneratedRouteBuilderExtensionsCore.ExecuteObjectResult(result, httpContext);
                 }
+
                 async Task RequestHandlerFiltered(HttpContext httpContext)
                 {
                     var result = await filteredInvocation(new DefaultEndpointFilterInvocationContext(httpContext));
                     await GeneratedRouteBuilderExtensionsCore.ExecuteObjectResult(result, httpContext);
                 }
+
 
                 RequestDelegate targetDelegate = filteredInvocation is null ? RequestHandler : RequestHandlerFiltered;
                 var metadata = inferredMetadataResult?.EndpointMetadata ?? ReadOnlyCollection<object>.Empty;
@@ -152,16 +156,6 @@ namespace Microsoft.AspNetCore.Http.Generated
                 filteredInvocation = filterFactory(context0, filteredInvocation);
             }
             return filteredInvocation;
-        }
-
-        private static void PopulateMetadata<T>(MethodInfo method, EndpointBuilder builder) where T : IEndpointMetadataProvider
-        {
-            T.PopulateMetadata(method, builder);
-        }
-
-        private static void PopulateMetadata<T>(ParameterInfo parameter, EndpointBuilder builder) where T : IEndpointParameterMetadataProvider
-        {
-            T.PopulateMetadata(parameter, builder);
         }
 
         private static Task ExecuteObjectResult(object? obj, HttpContext httpContext)
